@@ -4,10 +4,13 @@ import { IoFilterSharp } from 'react-icons/io5'
 import { TaskContext } from '../context/taskContext';
 import { useEffect } from 'react';
 import TaskItem from '../components/TaskItem';
+import TaskModal from '../components/TaskModal';
 
 const Complete = () => {
   const { allTasks, fetchTasks, fetched, loading: taskLoading } = useContext(TaskContext);
   const [sortBy, setSortBy] = useState('newest');
+  const [showModal, setShowModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
   useEffect(() => {
     fetchTasks();   // fetch tasks on mount

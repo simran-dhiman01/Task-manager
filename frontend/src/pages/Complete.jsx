@@ -110,6 +110,14 @@ const Complete = () => {
           ))
         )}
       </div>
+      {
+        (showModal || !!selectedTask) && (
+          <TaskModal
+            isOpen={showModal || !!selectedTask}
+            onClose={() => { setShowModal(false); setSelectedTask(null) }}
+            taskToEdit={selectedTask} />
+        )
+      }
 
     </div>
   )

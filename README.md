@@ -47,6 +47,7 @@ cd task-manager
 ```bash
 cd backend
 npm install
+node server.js
 ```
 #### Create .env file inside backend folder
 ```bash

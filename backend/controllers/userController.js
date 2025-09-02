@@ -47,10 +47,8 @@ export const register = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             message: "Internal server error",
-            error: error.message,
             success: false
         })
     }
@@ -93,10 +91,8 @@ export const login = async (req, res) => {
                 success: true
             })
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             message: "Internal server error",
-            error: error.message,
             success: false
         })
     }
@@ -113,7 +109,6 @@ export const logout = async (req, res) => {
             success: true
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             message: "Internal server error",
             success: false
@@ -136,7 +131,6 @@ export const getCurrentUser = async (req, res) => {
             user
         })
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             message: "Internal server error",
             success: false
@@ -173,7 +167,6 @@ export const updateProfile = async (req, res) => {
             user
         })
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             message: "Internal server error",
             success: false
@@ -212,7 +205,6 @@ export const updatePassword = async (req, res) => {
             message:'Password updated.'
         })
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             message: "Internal server error",
             success: false

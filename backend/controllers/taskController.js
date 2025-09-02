@@ -10,25 +10,29 @@ export const getTasks = async (req, res) => {
             tasks
         })
     } catch (error) {
-        console.log(error);
-        res.status(500).json('Server error : Failed to read tasks')
+        res.status(500).json({
+            message: 'Server error : Failed to load tasks',
+            success: false
+        })
     }
 }
 
 //GET TASK BY ID
 export const getTaskById = async (req, res) => {
     try {
-        const task = await Task.findOne({ _id : req.params.id , owner:req.user.id });
-        if(!task){
-            return res.status(404).json({success:false, message:"Task not found"})
+        const task = await Task.findOne({ _id: req.params.id, owner: req.user.id });
+        if (!task) {
+            return res.status(404).json({ success: false, message: "Task not found" })
         }
         res.status(200).json({
-            success:true,
+            success: true,
             task
         })
     } catch (error) {
-        console.log(error);
-        res.status(500).json('Server error : Failed to read tasks')
+        res.status(500).json({
+            message: 'Server error : Failed to load task',
+            success: false
+        })
     }
 }
 
@@ -61,8 +65,10 @@ export const addTask = async (req, res) => {
             task: newTask,
         })
     } catch (error) {
-        console.log(error);
-        res.status(500).json('Server error : Please try again later')
+        res.status(500).json({
+            message: 'Server error : Please try again later',
+            success: false
+        })
     }
 }
 
@@ -70,26 +76,25 @@ export const addTask = async (req, res) => {
 export const updateTask = async (req, res) => {
     try {
         const taskID = req.params.id
-        const data = {...req.body}
-        if(data.completed !== undefined){
-            data.completed === true;
-        }
-        const updated = await Task.findOneAndUpdate( 
-            {_id:taskID , owner:req.user.id },
+        const data = { ...req.body }
+        const updated = await Task.findOneAndUpdate(
+            { _id: taskID, owner: req.user.id },
             data,
-            { new: true, runValidators: true}
+            { new: true, runValidators: true }
         )
-        if(!updated){
-            return res.status(400).json( { success:false , message:"Task not found or not yours."})
+        if (!updated) {
+            return res.status(400).json({ success: false, message: "Task not found or not yours." })
         }
         res.status(200).json({
-            success:true,
+            success: true,
             updated,
-            message:"Task updated successfully."
+            message: "Task updated successfully."
         })
     } catch (error) {
-        console.log(error);
-        res.status(500).json('Server error : Failed to update task completed')
+        res.status(500).json({
+            message: 'Server error : Please try again later',
+            success: false
+        })
     }
 }
 
@@ -98,14 +103,16 @@ export const deleteTask = async (req, res) => {
     try {
         const taskID = req.params.id
         const deleteTask = await Task.findOneAndDelete(
-            {_id : taskID , owner:req.user.id}
+            { _id: taskID, owner: req.user.id }
         )
-        if(!deleteTask){
-            return res.status(404).json({success:false, message:"Task not found"})
+        if (!deleteTask) {
+            return res.status(404).json({ success: false, message: "Task not found" })
         }
-        res.status(200).json({success:true , message:"Task deleted."})
+        res.status(200).json({ success: true, message: "Task deleted." })
     } catch (error) {
-        console.log(error);
-        res.status(500).json('Server error : Please try again later')
+        res.status(500).json({
+            message: 'Server error : Please try again later',
+            success: false
+        })
     }
 }

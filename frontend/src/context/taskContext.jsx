@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import api from '../utils/Api';
 import toast from "react-hot-toast";
 
@@ -8,6 +8,7 @@ export const TaskProvider = ({ children }) => {
     const [allTasks, setAllTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [fetched, setFetched] = useState(false);
 
     const fetchTasks = async () => {
         try {
@@ -21,6 +22,7 @@ export const TaskProvider = ({ children }) => {
         }
         finally {
             setLoading(false);
+            setFetched(true);
         }
     }
 
@@ -30,9 +32,9 @@ export const TaskProvider = ({ children }) => {
         try {
             const res = await api.post("/tasks/add", newTask);
             setAllTasks((prev) => [res.data.task, ...prev]);
-
             toast.success("Task added successfully");
         } catch (err) {
+            console.log(err)
             setError(err.response?.data?.message || "Failed to add task");
             toast.error("Failed to add task");
         } finally {
@@ -45,9 +47,8 @@ export const TaskProvider = ({ children }) => {
         try {
             const res = await api.put(`/tasks/update/${id}`, updatedTask);
             setAllTasks((prev) =>
-                prev.map((task) => (task._id === id ? res.data.task : task))
+                prev.map((task) => (task._id === id ? res.data.updated : task))
             );
-
             toast.success("Task updated successfully ");
         } catch (err) {
             setError(err.response?.data?.message || "Failed to update task");
@@ -62,7 +63,6 @@ export const TaskProvider = ({ children }) => {
         try {
             await api.delete(`/tasks/delete/${id}`);
             setAllTasks((prev) => prev.filter((task) => task._id !== id));
-
             toast.success("Task deleted successfully");
         } catch (err) {
             setError(err.response?.data?.message || "Failed to delete task");
@@ -74,6 +74,7 @@ export const TaskProvider = ({ children }) => {
     const value = {
         allTasks,
         loading,
+        fetched,
         error,
         //actions
         fetchTasks,

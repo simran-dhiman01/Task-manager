@@ -1,43 +1,73 @@
 import React from 'react'
 import { createContext, useState, useEffect } from "react";
 import api from '../utils/Api';
+import { useNavigate } from 'react-router';
+import toast from "react-hot-toast";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(() => {
+    const storedUser = localStorage.getItem("currentUser");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("token"));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   // Load user from localStorage OR backend
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       await fetchCurrentUser(); // always fetch fresh
-  //     } catch {
-  //       const storedUser = localStorage.getItem("currentUser");
-  //       if (storedUser) {
-  //         setCurrentUser(JSON.parse(storedUser));
-  //         setIsAuthenticated(true);
-  //       }
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchData();
-  // }, []);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+      const storedUser = localStorage.getItem("currentUser");
+      if (storedUser) {
+        setCurrentUser(JSON.parse(storedUser));
+        setIsAuthenticated(true);
+      }
+      try {
+        const user = await fetchCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+          setIsAuthenticated(true);
+          localStorage.setItem("currentUser", JSON.stringify(user));
+        }
+      } catch {
+        // token expired , clear everything
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+        localStorage.removeItem("currentUser");
+        localStorage.removeItem("token");
+
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
 
 
   const register = async (name, email, password) => {
     try {
       setLoading(true);
-      const res = await api.post('/user/register', {name, email, password});
-      setCurrentUser(res?.data?.user);
-      setIsAuthenticated(true);
-      localStorage.setItem("currentUser", JSON.stringify(res.data.user));
-      setError(null);
-      return res.data.user;
+      const res = await api.post('/user/register', { name, email, password });
+      if (res.data.success) {
+        setCurrentUser(res?.data?.user);
+        setIsAuthenticated(true);
+        localStorage.setItem("currentUser", JSON.stringify(res.data.user));
+        setError(null);
+        navigate('/login');
+        toast.success("Account Created Successfully.")
+        return res.data.user;
+      }
     } catch (error) {
       setError(error.response?.data?.message || "Registration failed");
       console.log(error)
@@ -49,11 +79,16 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const res = await api.post('/user/login', { email, password });
-      setCurrentUser(res?.data?.user);
-      setIsAuthenticated(true);
-      localStorage.setItem("currentUser", JSON.stringify(res.data.user));
-      setError(null);
-      return res.data.user;
+      if (res.data.success) {
+        setCurrentUser(res?.data?.user);
+        setIsAuthenticated(true);
+        localStorage.setItem("currentUser", JSON.stringify(res.data.user));
+        localStorage.setItem("token", res.data.token);
+        setError(null);
+        navigate('/' , { replace: true });
+        toast.success(`Welcome Back ${res.data.user.name}`);
+        return res.data.user;
+      }
     } catch (error) {
       setCurrentUser(null);
       setIsAuthenticated(false);
@@ -71,10 +106,11 @@ export const AuthProvider = ({ children }) => {
       setCurrentUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem("currentUser");
+      localStorage.removeItem("token");
+      navigate('/login');
     } catch (error) {
       console.error("Logout failed", error);
     }
-
   }
   const fetchCurrentUser = async () => {
     try {
@@ -84,7 +120,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       localStorage.setItem("currentUser", JSON.stringify(res.data.user));
       setError(null);
-      console.log(res);
+      return res.data.user;
     } catch (error) {
       setCurrentUser(null);
       setIsAuthenticated(false);
@@ -99,11 +135,15 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const res = await api.put("/user/updateProfile", profileData);
-      setCurrentUser(res.data.user);
-      localStorage.setItem("currentUser", JSON.stringify(res.data.user));
-      setError(null);
-      return res.data.user;
+      if (res.data.success) {
+        setCurrentUser(res.data.user);
+        localStorage.setItem("currentUser", JSON.stringify(res.data.user));
+        setError(null);
+        toast.success("Profile updated successfully");
+      }
+       return res.data.user;
     } catch (error) {
+      toast.error(error.response?.data?.message || "Error Updating Profile");
       setError(error.response?.data?.message || "Profile update failed");
       throw error;
     } finally {
@@ -113,10 +153,14 @@ export const AuthProvider = ({ children }) => {
   const updatePassword = async (passwordData) => {
     try {
       setLoading(true);
-      await api.put("/user/updatePassword", passwordData);
-      setError(null);
-      return "Password updated successfully";
+      const res = await api.put("/user/updatePassword", passwordData);
+      if (res.data.success) {
+        toast.success("Password updated");
+        setError(null);
+      }
+        return res.data;
     } catch (error) {
+      toast.error(error.response?.data?.message || "Error updating password");
       setError(error.response?.data?.message || "Password update failed");
       throw error;
     } finally {
